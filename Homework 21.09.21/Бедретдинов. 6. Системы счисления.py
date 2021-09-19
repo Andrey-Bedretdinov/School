@@ -5,7 +5,7 @@ answer = ''
 while a != 0:
     answer = str(a % x) + answer
     a //= x
-print(f'\nЧисло {a} в {x} СС - {answer}')
+print(f'\nЧисло в {x} СС - {answer}')
 
 k = 0
 for i in range(0, 10):
