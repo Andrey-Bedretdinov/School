@@ -69,3 +69,19 @@ for i in range(4563, 7913):
             maxim = i
         k += 1
 print(f'Количество - {k}\nМаксимальное - {maxim}')
+
+
+# 5
+print('\n----------------------\n\n# 5')
+maxim = 0
+k = 0
+for i in range(333666, 667000):
+    k_ = 0
+    for elem in str(i):
+        if elem == '7':
+            k_ += 1
+    if k_ >= 2 and i % 17 == 0:
+        if maxim < i:
+            maxim = i
+        k += 1
+print(f'Количество - {k}\nМаксимальное - {maxim}')
