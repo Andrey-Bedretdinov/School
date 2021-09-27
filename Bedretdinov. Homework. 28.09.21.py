@@ -57,3 +57,15 @@ for i in range(10, 1179, 2):
             minim = i
         summ += i
 print(f'Сумма чисел - {summ}\nМинимальное - {minim}')
+
+
+# 4
+print('\n----------------------\n\n# 4')
+maxim = 0
+k = 0
+for i in range(4563, 7913):
+    if i % 7 == 0 and int(str(i)[1]) + int(str(i)[-1]) > 10:
+        if maxim < i:
+            maxim = i
+        k += 1
+print(f'Количество - {k}\nМаксимальное - {maxim}')
