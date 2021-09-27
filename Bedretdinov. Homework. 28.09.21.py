@@ -1,5 +1,5 @@
 # 1
-print('\n----------------------\n\n# 1')
+print('\n----------------------\n# 1')
 minim = 7564
 k = 0
 for i in range(1056, 7564):
@@ -11,7 +11,7 @@ print(f'Количество - {k}\nМинимальное - {minim}')
 
 
 # 2
-print('\n----------------------\n\n# 2')
+print('\n----------------------\n# 2')
 
 
 def ss(a, x):
@@ -43,3 +43,17 @@ for i in range(1000, 70001):
             maxim = i
         k += 1
 print(f'Количество - {k}\nМаксимальное - {maxim}')
+
+
+# 3
+print('\n----------------------\n# 3')
+summ = 0
+minim = 1178
+for i in range(10, 1179, 2):
+    i = str(i)
+    if i[-1] != '0' and i[-1] != '2' and i[-1] != '6' and i[-1] != '8' and i[:-2] != '14':
+        i = int(i)
+        if minim > i:
+            minim = i
+        summ += i
+print(f'\nСумма чисел - {summ}\nМинимальное - {minim}')
