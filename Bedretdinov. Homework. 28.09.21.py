@@ -85,3 +85,17 @@ for i in range(333666, 667000):
             maxim = i
         k += 1
 print(f'Количество - {k}\nМаксимальное - {maxim}')
+
+
+# 6
+print('\n----------------------\n\n# 6')
+k = 0
+for i in range(2894, 174883):
+    summ = 0
+    for elem in str(i):
+        summ += int(elem)
+    if i % 10 == 8 and summ > 22:
+        k += 1
+    if k == 13:
+        number = i
+print(f'Количество - {k}\nТринадцатое такое число - {number}')
