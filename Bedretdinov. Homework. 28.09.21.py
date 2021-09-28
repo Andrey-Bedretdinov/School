@@ -51,7 +51,7 @@ summ = 0
 minim = 1178
 for i in range(10, 1179, 2):
     i = str(i)
-    if i[-1] != '0' and i[-1] != '2' and i[-1] != '6' and i[-1] != '8' and i[:-2] != '14':
+    if i[-1] != '0' and i[-1] != '2' and i[-1] != '6' and i[-1] != '8' and i[-2:] != '14':
         i = int(i)
         if minim > i:
             minim = i
