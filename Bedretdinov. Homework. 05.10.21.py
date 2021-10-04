@@ -31,7 +31,7 @@ for i in range(1000, 10000):
     while i_ != 0:
         count6 += 1
         i_ //= 6
-    if count6 <= 5 and ((i % 5 == 3 or i % 5 == 4) and i // 5 % 5 == 1):
+    if count6 <= 5 and ((i % 6 == 3 or i % 6 == 4) and i // 6 % 6 == 1):
         count += 1
         if i > maximum:
             maximum = i

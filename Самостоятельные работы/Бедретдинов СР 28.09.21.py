@@ -75,5 +75,4 @@ for i in range(2848, 109500):
             i_ //= 10
         if i_ == 8 and maximal < i:
             maximal = i
-
 print(count, maximal)
