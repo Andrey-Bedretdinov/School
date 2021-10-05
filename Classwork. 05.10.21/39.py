@@ -1,3 +1,4 @@
+# Способ 1
 def f(n):
     if n == 1:
         return 1
@@ -14,6 +15,7 @@ def g(n):
 
 print(g(21))
 
+# Способ 2
 F = [0, 1]
 G = [0, 1]
 for i in range(2, 22):
