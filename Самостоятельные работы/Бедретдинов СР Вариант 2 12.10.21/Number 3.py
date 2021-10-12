@@ -10,5 +10,5 @@ print(f(280))
 
 F = [1] * 281
 for i in range(1, 281):
-    F[i] = 1 + 1 + F[i - 1] + F[i // 3] + 1
+    F[i] = 2 + F[i - 1] + F[i // 3] + 1
 print(F[280])
