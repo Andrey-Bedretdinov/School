@@ -3,7 +3,21 @@ x = int(input('Введите конечную СС: '))
 
 answer = ''
 while a != 0:
-    answer = str(a % x) + answer
+    number = a % x
+    if number == 10:
+        number = 'A'
+    elif number == 11:
+        number = 'B'
+    elif number == 12:
+        number = 'C'
+    elif number == 13:
+        number = 'D'
+    elif number == 14:
+        number = 'E'
+    elif number == 15:
+        number = 'F'
+
+    answer = str(number) + answer
     a //= x
 print(f'\nЧисло в {x} СС - {answer}')
 
