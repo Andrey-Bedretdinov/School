@@ -49,17 +49,15 @@ print('-------------------')
 print('Number 3')
 count = 0
 for i in range(2943444, 2943529 + 1):
-    count += 1
     if is_simple(i):
+        count += 1
         print(count, i)
 
 print('-------------------')
 print('Number 4')
-numbers = []
 for i in range(33333, 55555 + 1):
     if is_simple(i) and summa(i) > 35:
-        numbers.append(i)
-print(*numbers)
+        print(i, summa(i))
 
 '''
 Number 1
@@ -73,12 +71,19 @@ Number 2
 1 41 1681 68921 2825761
 -------------------
 Number 3
-24 2943467
-48 2943491
-60 2943503
-84 2943527
+1 2943467
+2 2943491
+3 2943503
+4 2943527
 -------------------
 Number 4
-39799 39979 39989 48799 48889 48989 49789 49999
+39799 37
+39979 37
+39989 38
+48799 37
+48889 37
+48989 38
+49789 37
+49999 40
 '''
 
