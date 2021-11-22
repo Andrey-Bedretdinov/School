@@ -5,6 +5,7 @@
 
 file = open('k7-3.txt')
 data = file.read()
+file.close()
 count = 0
 max_count = 0
 for char in data:
@@ -25,6 +26,7 @@ print('1.', max_count)
 
 file = open('k7a-2.txt')
 data = file.read()
+file.close()
 count = 0
 max_count = 0
 for char in data:
@@ -46,6 +48,7 @@ print('2.', max_count)
 
 file = open('k7b-2.txt')
 data = file.read()
+file.close()
 count = 0
 max_count = 0
 for char in data:
@@ -74,6 +77,7 @@ print('3.', max_count)
 
 file = open('k7c-2.txt')
 data = file.read()
+file.close()
 count = 0
 for i in range(len(data) - 2):
     if data[i] in "ACE" and \
@@ -94,6 +98,7 @@ print('4.', count)
 
 file = open('k8-25.txt')
 data = file.read()
+file.close()
 count = 1
 max_count = 0
 max_char = data[0]
@@ -119,6 +124,7 @@ print('5.', max_char, max_count)
 
 file = open('k8-2.txt')
 data = file.read()
+file.close()
 count = 0
 max_count = 0
 for i in range(1, len(data) - 1):
@@ -160,7 +166,6 @@ for char in chars:
         break
 
 print(f'159. {max_char}{max_value}')
-
 
 '''
 Ответы:   1. 1
