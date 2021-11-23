@@ -81,13 +81,30 @@ count = 1
 max_count = 0
 index_last_char = 0
 for i in range(1, len(data)):
-    if ord(data[i]) < ord(data[i - 1]):
+    if data[i] < data[i - 1]:
         count += 1
         continue
     elif max_count < count:
         max_count = count
-        index_last_char = i - 1
+        index_last_char = i
     count = 1
 number_max_char = index_last_char - max_count + 1
 print('Number 5:', number_max_char)
+
+'------------------------------------------------------------------------------------------------------'
+
+# Number 6
+file = open('24-3.txt')
+data = file.read()
+file.close()
+count = 1
+max_count = 0
+for i in range(1, len(data)):
+    if data[i] < data[i - 1]:
+        count += 1
+        continue
+    elif max_count < count:
+        max_count = count
+    count = 1
+print('Number 6:', max_count)
 
