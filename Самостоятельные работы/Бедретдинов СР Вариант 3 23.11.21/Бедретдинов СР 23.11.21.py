@@ -11,7 +11,7 @@ for char in data:
     elif max_count < count:
         max_count = count
     count = 0
-print('Number 1:', max_count)
+print('\nNumber 1:', max_count)
 
 '-----------------------------------------------------------'
 
