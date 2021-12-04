@@ -10,7 +10,7 @@ def f(x, y, p):
 
 for i in range(1, 10000):
     if f(5, i, 1):
-        print('Number 1:', i)
+        print('\nNumber 1:', i)
         break
 
 
@@ -76,6 +76,8 @@ for i in range(1, 100):
 print('Number 3:', *(set(ans1) - set(ans2)))
 
 
-
-
-
+'''
+    Number 1: 16
+    Number 2: 29
+    Number 3: 27 28
+'''
