@@ -88,3 +88,17 @@ for i in range(1, len(data)):
         count += 1
         sums.append(data[i - 1] + data[i])
 print(count, min(sums))
+
+print('----------')
+
+count = 0
+letters = 'ИГРА'
+for a1 in letters:
+    for a2 in letters:
+        for a3 in letters:
+            for a4 in letters:
+                for a5 in letters:
+                    word = a1 + a2 + a3 + a4 + a5
+                    if word.count('А') == 2:
+                        count += 1
+print(count)
