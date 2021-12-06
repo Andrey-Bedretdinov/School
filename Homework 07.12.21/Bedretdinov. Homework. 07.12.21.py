@@ -20,7 +20,7 @@ print('Number 2: 20')
 '--------------------------------------------'
 
 # Number 3
-print('Number 3: 21')
+print('Number 3: 13')
 
 '--------------------------------------------'
 
@@ -33,13 +33,13 @@ while '13' in s or '32' in s or '12' in s:
         s = s.replace('32', '23', 1)
     if '12' in s:
         s = s.replace('12', '21', 1)
-print('Number 4:', s[10], s[70], s[140])
+print('Number 4: ', s[10], s[70], s[140], sep='')
 
 '--------------------------------------------'
 
 # Number 5
 numbers = []
-for i in range(1206, 14993 + 1):
+for i in range(1206, 14993):
     if (i % 10) in [3, 6] and i % 3 != 0 and i % 4 != 0 and i % 5 != 0:
         numbers.append(i)
 print('Number 5:', len(numbers), min(numbers))
@@ -63,3 +63,13 @@ for i in range(101, 100000000):
     if f6(i) == 35:
         print('Number 6:', i)
         break
+
+
+'''
+    Number 1: 699
+    Number 2: 20
+    Number 3: 21
+    Number 4: 2 3 1
+    Number 5: 1380 1213
+    Number 6: 120
+'''
