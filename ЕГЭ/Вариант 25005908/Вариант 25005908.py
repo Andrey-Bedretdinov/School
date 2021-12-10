@@ -278,6 +278,7 @@ for i in open('27-A (25005908).txt'):
 summa_v = 0
 summa_n = 0
 minim = 10000000
+n, v = 0, 0
 for i in data:
     summa_v += max(i)
     summa_n += min(i)
