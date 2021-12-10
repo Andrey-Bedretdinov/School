@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+print('# Number 2')
 print('x y z w')
 for x in [0, 1]:
     for y in [0, 1]:
@@ -19,6 +20,7 @@ def f(s):
     return n
 
 
+print('# Number 6')
 for i in range(10000, 0, -1):
     if f(i) == 27:
         print(i)
@@ -35,6 +37,7 @@ def f(a):
     return ans
 
 
+print('# Number 8')
 count = 0
 for i in range(3125, 15625):
     if f(i)[-1] != '3' and f(i)[-1] != '4' and f(i)[0] != '1':
@@ -43,6 +46,7 @@ print(count)
 
 print('---------')
 
+print('# Number 12')
 s = '23' * 30 + '1' * 30
 while '21' in s or '23' in s:
     if '21' in s:
@@ -53,6 +57,7 @@ print(s.count('1'))
 
 print('---------')
 
+print('# Number 14')
 a = 5 * 216 ** 1156 - 4 * 36 ** 1147 + 6 ** 1153 - 875
 a6 = ''
 while a != 0:
@@ -62,6 +67,7 @@ print(a6.count('5') - a6.count('0'))
 
 print('---------')
 
+print('# Number 15')
 count = 0
 for a in range(1, 1001):
     for x in range(1, 10000):
@@ -83,6 +89,7 @@ def f(n):
         return f(n - 1) + n
 
 
+print('# Number 16')
 count = 0
 for i in range(1, 100000 + 1):
     if f(i) == 16:
@@ -91,6 +98,7 @@ print(count)
 
 print('---------')
 
+print('# Number 17')
 count = 0
 minim = 1000000000000
 for i in range(3072, 7320 + 1):
@@ -122,9 +130,10 @@ def f(p):
         return 'В3'
 
 
+print('# Number 19, 20, 21')
 for i in range(1, 102):
     if f(i) == 'В1' and i % 3 == 0:
-        print(i, i / 3, end=' | ')
+        print(i, i // 3, end=' | ')
         break
 
 for i in range(1, 102):
@@ -152,6 +161,7 @@ def f(a):
     return l, m
 
 
+print('# Number 22')
 for i in range(10000, 0, -1):
     if f(i) == (11, 14):
         print(i)
@@ -169,10 +179,12 @@ def f(start, stop):
         return f(start + 1, stop) + f(start * 2, stop)
 
 
+print('# Number 23')
 print(f(2, 7) * f(7, 16) * f(16, 39))
 
 print('-----------')
 
+print('# Number 24')
 file = open('24 (25005908).txt')
 data = file.read()
 file.close()
@@ -180,9 +192,10 @@ count = 0
 maxim = 0
 for i in range(len(data)):
     if data[i] in 'WRQ':
-        maxim = max(maxim, count)
         count = 0
-    count += 1
+    else:
+        count += 1
+    maxim = max(maxim, count)
 print(maxim)
 
 print('-----------')
@@ -195,41 +208,40 @@ def is_simple(a):
     return True
 
 
-def f(a):
-    divs = set()
-    for div in range(1, int(a ** 0.5) + 1):
-        if a % div == 0:
-            if is_simple(div):
-                divs.add(div)
-            if a // div != a and is_simple(a // div):
-                divs.add(a // div)
-    return sum(divs)
-
-
+print('# Number 25')
 k = 5
-for i in range(250001, 100000000000):
+for i in range(250001, 10000000000):
+    divs = set()
     if k == 0:
         break
-    summa = f(i)
-    if summa != 0 and summa % 17 == 0:
-        print(i, summa)
+    for div in range(2, int(i**0.5) + 1):
+        if i % div == 0:
+            if is_simple(div):
+                divs.add(div)
+            if is_simple(i // div):
+                divs.add(i // div)
+    if sum(divs) != 0 and sum(divs) % 17 == 0:
+        print(i, sum(divs))
         k -= 1
 
 print('-----------')
 
+print('# Number 26')
 numbers = []
 for i in open('26 (25005908).txt'):
     numbers.append(int(i))
 d1 = []
 d2 = []
-for i in numbers:
+for i in range(10000):
     count = numbers.count(i)
-    if count / 2 > 1:
+    while count / 2 >= 1:
         d1.append(i)
         d2.append(i)
         numbers.remove(i)
         numbers.remove(i)
-print(len(numbers) + len(d1) + len(d2), len(numbers), len(d1), len(d2))
+        count -= 2
+
+print(len(numbers), end=' ')
 
 while len(numbers):
     if sum(d1) > sum(d2):
@@ -253,10 +265,11 @@ while len(numbers):
             numbers.remove(min(numbers))
         except Exception as ex:
             print(ex)
-print(sum(d1) - sum(d2))
+print(abs(sum(d1) - sum(d2)))
 
 print('-------------')
 
+print('# Number 27')
 data = []
 for i in open('27-A (25005908).txt'):
     a, b = i.split(' ')

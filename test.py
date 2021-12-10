@@ -1,17 +1,40 @@
-# a = (3 + 2 * 4**x) * 4**x + 3 + 4**y
-def f(n):
-    summa = 0
-    while n != 0:
-        summa += n % 4
-        n //= 4
-    return summa
+print('# Number 26')
+numbers = []
+for i in open('26 (25005908).txt'):
+    numbers.append(int(i))
+d1 = []
+d2 = []
+for i in range(10000):
+    count = numbers.count(i)
+    while count / 2 >= 1:
+        d1.append(i)
+        d2.append(i)
+        numbers.remove(i)
+        numbers.remove(i)
+        count -= 2
 
+print(len(numbers), end=' ')
 
-maxim = 0
-for x in range(200):
-    for y in range(100):
-        a = (3 + 2 * 4**x) * 4**x + 3 + 4**y
-        h = f(a)
-        if maxim < h:
-            maxim = h
-print(maxim)
+while len(numbers):
+    if sum(d1) > sum(d2):
+        d2.append(max(numbers))
+        numbers.remove(max(numbers))
+        d2.append(max(numbers))
+        numbers.remove(max(numbers))
+        d1.append(min(numbers))
+        numbers.remove(min(numbers))
+        d1.append(min(numbers))
+        numbers.remove(min(numbers))
+    else:
+        try:
+            d1.append(max(numbers))
+            numbers.remove(max(numbers))
+            d1.append(max(numbers))
+            numbers.remove(max(numbers))
+            d2.append(min(numbers))
+            numbers.remove(min(numbers))
+            d2.append(min(numbers))
+            numbers.remove(min(numbers))
+        except Exception as ex:
+            print(ex)
+print(abs(sum(d1) - sum(d2)))
