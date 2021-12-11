@@ -1,3 +1,4 @@
+# Number 2
 def f(a):
     a = bin(a)[2:]
     a = a + str(a.count('1') % 2)
@@ -12,6 +13,7 @@ for i in range(10000, 0, -1):
 
 '---------------------------------'
 
+# Number 4
 dpi1 = 300
 i1 = 16
 I1 = 18
@@ -22,6 +24,7 @@ print('#4:', I2)
 
 '---------------------------------'
 
+# Number 6
 count = 0
 letters = 'РАЗМХ'
 for a1 in letters:
@@ -37,6 +40,7 @@ print('#6:', count)
 
 '---------------------------------'
 
+# Number 8
 k = 10
 N = 26
 i = 5
@@ -47,6 +51,7 @@ print('#8:', n)
 
 '---------------------------------'
 
+# Number 10
 maxim = 0
 for x in range(100):
     for y in range(100):
@@ -60,6 +65,7 @@ print('#10:', maxim)
 
 '---------------------------------'
 
+# Number 12
 a = 128**30 + 16**60 - 16
 count = 0
 while a:
@@ -70,6 +76,7 @@ print('#12:', count)
 
 '---------------------------------'
 
+# Number 15
 for a in range(10000, 0, -1):
     for x in range(1, 10000):
         if not(70 % a == 0 and (x % a == 0 or (x % 18 != 0 or x % 42 != 0))):
