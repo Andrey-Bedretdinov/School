@@ -27,6 +27,23 @@ for i in range(1, 100000):
 
 print('----------')
 
+
+def f(a_):
+    a_ = bin(a_)[2:]
+    if a_.count('1') > a_.count('0'):
+        a_ += '0'
+    else:
+        a_ = '11' + a_
+    return int(a_, 2)
+
+
+for i in range(1, 1000000):
+    if f(f(i)) > 500:
+        print(i)
+        break
+
+print('----------')
+
 count = 0
 letters = 'ГАФНИЙ'
 for a1 in letters:

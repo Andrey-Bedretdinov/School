@@ -1,10 +1,13 @@
-# Number 2
-count = 0
-data = []
-for i in open('17-4.txt'):
-    data.append(int(i))
-numbers = []
-for i in data:
-    if (i % 3) == (i % 5) and (i % 31 == 0 or i % 47 == 0 or i % 53 == 0):
-        numbers.append(i)
-print('#2:', len(numbers), min(numbers))
+def f(a):
+    a = bin(a)[2:]
+    if a.count('1') > a.count('0'):
+        a += '0'
+    else:
+        a = '11' + a
+    return int(a, 2)
+
+
+for i in range(1, 1000000):
+    if f(f(i)) > 500:
+        print(i)
+        break
