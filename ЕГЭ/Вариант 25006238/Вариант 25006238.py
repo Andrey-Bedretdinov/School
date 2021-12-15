@@ -114,7 +114,7 @@ def moves(p):
     return p + 1, p * 2, p * 3
 
 
-@lru_cache(None)
+@lru_cache()
 def f(p):
     if p > 72:
         return 'В1'
