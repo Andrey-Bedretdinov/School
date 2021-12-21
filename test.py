@@ -1,14 +1,13 @@
-def f(s):
-    while '1111' in s:
-        s = s.replace('1111', '22', 1)
-        s = s.replace('222', '1', 1)
-    return s.count('1')
+def f(n):
+    if n == 0:
+        return 0
+    if n > 0 and n % 3 == 2:
+        return f(n - 1) + 1
+    if n > 0 and n % 3 < 2:
+        return f((n - n % 3) / 3)
 
 
-minim = 1111111111111111
-count = 0
-for i in range(201, 10000):
-    if f('1' * i) > count:
-        count = f('1' * i)
-        minim = min(minim, i)
-print(minim, count)
+for i in range(1000000000):
+    if f(i) == 6:
+        print(i)
+        break

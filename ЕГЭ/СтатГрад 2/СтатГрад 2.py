@@ -88,7 +88,7 @@ def f(n):
 
 
 for i in range(1000000000):
-    if f(i) == 5:
+    if f(i) == 6:
         print(i)
         break
 
