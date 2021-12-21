@@ -57,7 +57,7 @@ def f(s):
 
 minim = 10000000000000000
 count = 0
-for i in range(10000, 199, -1):
+for i in range(1000, 199, -1):
     a = f('1' * i)
     if a > count:
         minim = i
@@ -143,7 +143,7 @@ def f(p, last=''):
         return 'В3'
 
 
-print('------------')
+'------------'
 
 
 def f(x):
