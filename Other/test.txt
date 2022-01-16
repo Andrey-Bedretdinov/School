@@ -1,0 +1,952 @@
+from time import sleep, monotonic
+from headers import headers
+import bs4
+import requests
+import json
+import datetime
+import bottle
+
+
+def get_config():
+    try:
+        with open('config.json', 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except Exception as ex:
+        print(f'Config read error (get_config) "{ex}"')
+
+
+def get_person_info(person_id, result: dict):
+    try:
+        for name in ['lineups', 'lineups_bench']:
+            for i in result['competition']['season']['round']['match'][name]:
+                if i['person_id'] == person_id:
+                    try:
+                        return {'person': i['person'], 'team_id': i['team_id'], 'shirtnumber': i['shirtnumber']}
+                    except KeyError:
+                        return {'person': i['person'], 'team_id': i['team_id']}
+    except Exception as ex:
+        print(f'Player data retrieval error (get_person_info) "{ex}"')
+
+
+def get_proxies_list():
+    try:
+        with open('proxies.json', 'r') as file:
+            proxies_list: list = json.load(file)
+        return proxies_list
+    except Exception as ex:
+        print(f'Error reading proxy (get_proxies_list) "{ex}"')
+
+
+def update_proxy():
+    global last_update_proxy
+    try:
+        proxies_list = []
+        url = f'https://hidemy.name/ru/proxy-list/?type=h'
+        req = requests.get(url, headers=headers)
+        src = req.text
+        soup = bs4.BeautifulSoup(src, 'lxml')
+        proxies_src = soup.find('table').find('tbody').find_all('tr')
+        for tr in proxies_src:
+            info = tr.find_all('td')
+            ip = info[0].text.strip()
+            port = info[1].text.strip()
+            proxies_list.append(f'http://{ip}:{port}')
+        with open('proxies.json', 'w') as file:
+            json.dump(proxies_list, file, indent=4, ensure_ascii=False)
+        last_update_proxy = monotonic()
+    except Exception as ex:
+        print(f'Proxy update error (update_proxy) "{ex}"')
+
+
+def delete_first_proxy():
+    try:
+        proxies_list = get_proxies_list()
+        proxies_list.remove(proxies_list[0])
+        with open('proxies.json', 'w') as file:
+            json.dump(proxies_list, file, indent=4, ensure_ascii=False)
+    except Exception as ex:
+        print(f'Error deleting the first proxy (delete_first_proxy) "{ex}"')
+
+
+def get_proxy():
+    try:
+        proxies_list = get_proxies_list()
+        if len(proxies_list) == 0:
+            update_proxy()
+            proxies_list = get_proxies_list()
+        delete_first_proxy()
+        print('Proxy:', proxies_list[0])
+        return proxies_list[0]
+    except Exception as ex:
+        print(f'Error getting proxy (get_proxy) "{ex}"')
+
+
+def check_proxy():
+    global last_update_proxy
+    try:
+        diff = monotonic() - last_update_proxy
+        delay = 3 * 3600
+        if diff > delay:
+            update_proxy()
+    except Exception as ex:
+        print(f'Proxy check error (check_proxy) "{ex}"')
+
+
+def get_input_data(data: str):
+    try:
+        data = data.split('&')
+        data = list(x.split('=') for x in data)
+        match_day = data[0][1].replace('-', '/')
+        match_id = data[1][1]
+        return [match_day, match_id]
+    except Exception as ex:
+        print(f'Error getting entered data (get_input_data) "{ex}"')
+
+
+def save_src(src):
+    try:
+        with open("index.html", "w", encoding='utf-8') as file:
+            file.write(src)
+    except Exception as ex:
+        print(f'Save HTML error (save_src) "{ex}"')
+
+
+def get_result_pattern():
+    try:
+        with open("sample.json", "r", encoding='utf-8') as file:
+            result_pattern = json.load(file)
+        return result_pattern
+    except Exception as ex:
+        print(f'Save HTML error (get_result_pattern) "{ex}"')
+
+
+def update_competition_info(soup, result: dict):
+    try:
+        competition_info = soup.find(class_='left-tree').find(class_='expanded')  #
+        competition_name = competition_info.find('a').text
+        competition_link = competition_info.find('a').get('href')
+        competition_id = competition_link.split('/')[-2]
+        competition_id = "".join(c for c in competition_id if c.isdecimal())
+        competition_type = competition_link.split('/')[1]
+
+        result['competition']['competition_name'] = competition_name
+        result['competition']['competition_id'] = competition_id
+        result['competition']['competition_type'] = competition_type
+    except Exception as ex:
+        print(f'Competition information search error (update_competition_info) "{ex}"')
+    finally:
+        return result
+
+
+def update_competition_country(soup, result: dict):
+    try:
+        competition_country = soup.find(class_='header-label').text.strip()
+        result['competition']['competition_country'] = competition_country
+    except Exception as ex:
+        print(f'Country search error (update_competition_country) "{ex}"')
+    finally:
+        return result
+
+
+def update_season_info(soup, result: dict):
+    try:
+        competition_info = soup.find(class_='left-tree').find(class_='expanded')
+        season_info = competition_info.find(class_='expanded').find('a')
+        season_id = season_info.get('href').split('/')[-2]
+        season_id = "".join(c for c in season_id if c.isdecimal())
+        season_name = season_info.text.strip()
+
+        result['competition']['season']['season_id'] = season_id
+        result['competition']['season']['name'] = season_name
+    except Exception as ex:
+        print(f'Season information lookup error (update_season_info) "{ex}"')
+    finally:
+        return result
+
+
+def get_round_name_via_request(link: str):
+    try:
+        proxies = {'http': get_proxy()}
+        req = requests.get(link, headers=headers, proxies=proxies, timeout=20)
+        src = req.text
+        soup = bs4.BeautifulSoup(src, 'lxml')
+        round_name = soup.find('div', class_='submenu_dropdown').find('select', id='round_id_selector'). \
+            find('option', selected='selected').text.strip()
+        return round_name
+    except Exception as ex:
+        print(f'Error searching for the name of the round through the query (get_round_name_via_request) "{ex}"')
+        return ''
+
+
+def get_round_name(soup):
+    round_name = ''
+    try:
+        round_name = soup.find('div', class_='block_competition_left_tree').find('ul', class_='level-2 expanded'). \
+            find('li', class_='current leaf').find('a').text
+    except AttributeError:
+        try:
+            rounds_counts = soup.find('div', class_='block_competition_left_tree').find('ul',
+                                                                                        class_='level-2 expanded'). \
+                find('li', class_='leaf').find_all('a')
+            round_name = 'Final Stages'
+        except AttributeError:
+            round_name = ''
+    finally:
+        return round_name
+
+
+def update_round_info(soup, result: dict):
+    try:
+        details = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='details').find_all('a')
+        round_link = details[1].get('href')
+        round_id = round_link.split('/')[-2]
+        round_id = "".join(c for c in round_id if c.isdecimal())
+        round_name = get_round_name(soup)
+
+        result['competition']['season']['round']['name'] = round_name
+        result['competition']['season']['round']['round_id'] = round_id
+    except Exception as ex:
+        print(f'Round information lookup error (update_round_info) "{ex}"')
+    finally:
+        return result
+
+
+def update_date_time_info(soup, result: dict):
+    try:
+        details = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='details')
+        timestamp = int(details.find(class_='timestamp').get('data-value'))
+        date_utc = datetime.datetime.fromtimestamp(timestamp).date().strftime('%Y-%m-%d')
+        time_utc = datetime.datetime.fromtimestamp(timestamp).time().strftime('%H:%M')
+
+        result['competition']['season']['round']['match']['date_utc'] = date_utc
+        result['competition']['season']['round']['match']['time_utc'] = time_utc
+        result['competition']['season']['round']['match']['timestamp'] = str(timestamp)
+    except Exception as ex:
+        print(f'Error looking up date and time information (update_date_time_info) "{ex}"')
+    finally:
+        return result
+
+
+def update_game_week(soup, result: dict):
+    try:
+        details = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='details')
+        match_info_list = list(x.text for x in details.find_all('span', class_=''))
+        if match_info_list[0].lower() == 'game week':
+            game_week = match_info_list[1]
+            game_week_name = match_info_list[2]
+            game_week_result = {'number': game_week,
+                                'name': game_week_name}
+        else:
+            game_week_name = match_info_list[0]
+            game_week_result = {'number': '',
+                                'name': game_week_name}
+        result['competition']['season']['round']['match']['GameWeek'] = game_week_result
+    except Exception as ex:
+        print(f'Game of the week information search error (update_game_week) "{ex}"')
+    finally:
+        return result
+
+
+def update_teams_info(soup, result: dict):
+    try:
+        team_A_id = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='container left').find(class_='team-title').get('href').split('/')[4]
+        result['competition']['season']['round']['match']['team_A_id'] = team_A_id
+    except Exception as ex:
+        print(f'Error looking up command id A (update_teams_info) "{ex}"')
+
+    try:
+        team_A_name = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='container left').find(class_='team-title').text
+        result['competition']['season']['round']['match']['team_A_name'] = team_A_name
+    except Exception as ex:
+        print(f'Error looking up command name A (update_teams_info) "{ex}"')
+
+    try:
+        team_B_id = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='container right').find(class_='team-title').get('href').split('/')[4]
+        result['competition']['season']['round']['match']['team_B_id'] = team_B_id
+    except Exception as ex:
+        print(f'Error looking up command id B (update_teams_info) "{ex}"')
+
+    try:
+        team_B_name = soup.find(class_='match-header').find(class_='content').find(class_='wrapper'). \
+            find(class_='container right').find(class_='team-title').text
+        result['competition']['season']['round']['match']['team_B_name'] = team_B_name
+    except Exception as ex:
+        print(f'Error looking up command name B (update_teams_info) "{ex}"')
+
+    return result
+
+
+def update_match_status(soup, result: dict):
+    try:
+        status = soup.find(class_='even match border no-date-repetition').get('data-status')
+        result['competition']['season']['round']['match']['status'] = status
+    except Exception as ex:
+        print(f'Match status lookup error (update_match_status) "{ex}"')
+    finally:
+        return result
+
+
+def update_fs(soup, result: dict):
+    try:
+        ft = soup.find('span', class_='bidi').text.strip().split('-')
+        result['competition']['season']['round']['match']['fs_A'] = ft[0].strip()
+        result['competition']['season']['round']['match']['fs_B'] = ft[1].strip()
+    except Exception as ex:
+        print(f'Match score lookup error (update_fs) "{ex}"')
+    finally:
+        return result
+
+
+def update_matchinfo(soup, result: dict):
+    coach_team_a_person_id = ''
+    coach_team_b_person_id = ''
+    coach_team_a_link = ''
+    coach_team_b_link = ''
+    try:
+        additional = soup.find(class_='block redesign additional-info match-officials clearfix '
+                                      'block_match_additional_info-wrapper').find(class_='content').find_all(
+            'a')
+        persons_id = list(x.get('href').split('/')[3] for x in additional)
+        persons_name = list(x.text for x in additional)
+        persons_links = list('http://int.soccerway.com' + x.get('href') for x in additional)
+
+        for i in range(len(persons_id)):
+            result['competition']['season']['round']['match']['person_url'].append({'id': persons_id[i],
+                                                                                    'url': persons_links[i]})
+
+        try:
+            result['competition']['season']['round']['match']['matchinfo']['referee'] = {
+                'person_id': persons_id[0],
+                'name': persons_name[0]}
+        except Exception as ex:
+            print(f'No referee "{ex}"')
+
+        try:
+            result['competition']['season']['round']['match']['matchinfo']['assistant_referee'] = [
+                {'person_id': persons_id[1],
+                 'name': persons_name[1]}]
+        except Exception as ex:
+            print(f'No 1st assistant_referee "{ex}"')
+
+        try:
+            result['competition']['season']['round']['match']['matchinfo']['assistant_referee'].append(
+                {'person_id': persons_id[2], 'name': persons_name[2]})
+        except Exception as ex:
+            print(f'No 2nd assistant_referee "{ex}"')
+
+        try:
+            result['competition']['season']['round']['match']['matchinfo']['fourth_official'] = {
+                'person_id': persons_id[3],
+                'name': persons_name[3]}
+        except Exception as ex:
+            print(f'No fourth_official "{ex}"')
+
+        try:
+            coach_team_a_person_id = soup.find(class_='combined-lineups-container').find(class_='container left'). \
+                find(text='Coach:').next.next.get('href').split('/')[3]
+            coach_team_a_name = soup.find(class_='combined-lineups-container').find(class_='container left'). \
+                find(text='Coach:').next.next.text
+            coach_team_a_link = 'http://int.soccerway.com' + soup.find(class_='combined-lineups-container'). \
+                find(class_='container left').find(text='Coach:').next.next.get('href')
+            coach_team_b_person_id = soup.find(class_='combined-lineups-container').find(class_='container right'). \
+                find(text='Coach:').next.next.get('href').split('/')[3]
+            coach_team_b_name = soup.find(class_='combined-lineups-container').find(class_='container right'). \
+                find(text='Coach:').next.next.text
+            coach_team_b_link = 'http://int.soccerway.com' + soup.find(class_='combined-lineups-container'). \
+                find(class_='container right').find(text='Coach:').next.next.get('href')
+
+            result['competition']['season']['round']['match']['matchinfo']['coach_team_a'] = {
+                'person_id': coach_team_a_person_id,
+                'person': coach_team_a_name}
+            result['competition']['season']['round']['match']['matchinfo']['coach_team_b'] = {
+                'person_id': coach_team_b_person_id,
+                'person': coach_team_b_name}
+        except Exception as ex:
+            print(f'Failed to find trainers (update_matchinfo) "{ex}"')
+
+        try:
+            person_url = result['competition']['season']['round']['match']['person_url']
+            person_url.append({'id': coach_team_a_person_id, 'url': coach_team_a_link})
+            person_url.append({'id': coach_team_b_person_id, 'url': coach_team_b_link})
+            result['competition']['season']['round']['match']['person_url'] = person_url
+        except Exception as ex:
+            print(f'Error adding trainers (update_matchinfo) "{ex}"')
+
+    except Exception as ex:
+        print(f'Error finding the main faces of the match (update_matchinfo) "{ex}"')
+    finally:
+        return result
+
+
+def update_lineups(soup, result: dict):
+    try:
+        lineups = []
+        numbers = []
+
+        # Team A
+        try:
+            numbers = soup.find(class_='combined-lineups-container').find(class_='container left').find_all(
+                class_='shirtnumber')
+            numbers = list(x.text for x in numbers)[1:]
+            if not numbers:
+                print('No shirtnumbers')
+        except Exception as ex:
+            print(f'Error looking up player numbers (update_lineups) "{ex}"')
+
+        try:
+            names = soup.find(class_='combined-lineups-container').find(class_='container left'). \
+                find_all(class_='player large-link')
+            names = list(x.text.strip() for x in names)
+
+            persons_id = soup.find(class_='combined-lineups-container').find(class_='container left'). \
+                find_all(class_='player large-link')
+            persons_id = list(x.next.next.get('href').split('/')[3] for x in persons_id)
+            team_A_id = result['competition']['season']['round']['match']['team_A_id']
+
+            for i in range(len(names)):
+                lineups.append({'code': 'L',
+                                'name': 'Line-up',
+                                'person': names[i],
+                                'person_id': persons_id[i],
+                                'team_id': team_A_id})
+                try:
+                    lineups[-1]['shirtnumber'] = numbers[i]
+                except:
+                    pass
+
+        except Exception as ex:
+            print(f'Error searching for the main composition of team A (update_lineups) "{ex}"')
+
+        # Team B
+        try:
+            numbers = soup.find(class_='combined-lineups-container').find(class_='container right').find_all(
+                class_='shirtnumber')
+            numbers = list(x.text for x in numbers)[1:]
+
+            names = soup.find(class_='combined-lineups-container').find(class_='container right'). \
+                find_all(class_='player large-link')
+            names = list(x.text.strip() for x in names)
+
+            persons_id = soup.find(class_='combined-lineups-container').find(class_='container right'). \
+                find_all(class_='player large-link')
+            persons_id = list(x.next.next.get('href').split('/')[3] for x in persons_id)
+            team_B_id = result['competition']['season']['round']['match']['team_B_id']
+
+            for i in range(len(names)):
+                lineups.append({'code': 'L',
+                                'name': 'Line-up',
+                                'person': names[i],
+                                'person_id': persons_id[i],
+                                'team_id': team_B_id})
+                try:
+                    lineups[-1]['shirtnumber'] = numbers[i]
+                except:
+                    pass
+
+        except Exception as ex:
+            print(f'Error searching for the main composition of team B (update_lineups) "{ex}"')
+
+        result['competition']['season']['round']['match']['lineups'] = lineups
+    except Exception as ex:
+        print(f'Main lineup search error (update_lineups) "{ex}"')
+    finally:
+        return result
+
+
+def update_lineups_bench(soup, result: dict):
+    try:
+        lineups_bench = []
+
+        # Team A
+        try:
+            numbers = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container left').find_all(class_='shirtnumber')
+            numbers = list(x.text for x in numbers)[1:]
+
+            names = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container left').find_all(class_='player large-link')
+            names = list(x.find(class_='substitute substitute-in').text.strip() for x in names)
+
+            persons_id = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container left').find_all(class_='player large-link')
+            persons_id = list(
+                x.find(class_='substitute substitute-in').next.next.get('href').split('/')[3] for x in persons_id)
+            team_A_id = result['competition']['season']['round']['match']['team_A_id']
+
+            for i in range(len(names)):
+                lineups_bench.append({'code': 'SUB',
+                                      'name': 'Substitution on bench',
+                                      'person': names[i],
+                                      'person_id': persons_id[i],
+                                      'team_id': team_A_id})
+                try:
+                    lineups_bench[-1]['shirtnumber'] = numbers[i]
+                except:
+                    pass
+
+        except Exception as ex:
+            print(f'Team A reserve search error (update_lineups_bench) "{ex}"')
+
+        # Team B
+        try:
+            numbers = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container right').find_all(class_='shirtnumber')
+            numbers = list(x.text for x in numbers)[1:]
+
+            names = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container right').find_all(class_='player large-link')
+            names = list(x.find(class_='substitute substitute-in').text.strip() for x in names)
+
+            persons_id = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container right').find_all(class_='player large-link')
+            persons_id = list(
+                x.find(class_='substitute substitute-in').next.next.get('href').split('/')[3] for x in persons_id)
+            team_B_id = result['competition']['season']['round']['match']['team_B_id']
+
+            for i in range(len(names)):
+                lineups_bench.append({'code': 'SUB',
+                                      'name': 'Substitution on bench',
+                                      'person': names[i],
+                                      'person_id': persons_id[i],
+                                      'team_id': team_B_id})
+                try:
+                    lineups_bench[-1]['shirtnumber'] = numbers[i]
+                except:
+                    pass
+
+        except Exception as ex:
+            print(f'Team B reserve search error (update_lineups_bench) "{ex}"')
+
+        result['competition']['season']['round']['match']['lineups_bench'] = lineups_bench
+    except Exception as ex:
+        print(f'Replacement lineup search error (update_lineups_bench) "{ex}"')
+    finally:
+        return result
+
+
+def update_substitutions(soup, result: dict):
+    try:
+        substitutions = []
+
+        # Team A
+        try:
+            persons_out_html = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container left').find_all(class_='substitute substitute-out')
+            persons_out = list([x.text.split(' ')[-1].strip()[:-1].split('+'),
+                                x.find('a').get('href').split('/')[3]] for x in persons_out_html)
+
+            persons_in = list(x.find_parent(class_='player large-link').find(class_='substitute substitute-in'). \
+                              find('a').get('href').split('/')[3] for x in persons_out_html)
+
+            for i in range(len(persons_in)):
+                persons_info_in = get_person_info(person_id=persons_in[i], result=result)
+                persons_info_out = get_person_info(person_id=persons_out[i][1], result=result)
+                try:
+                    substitutions.append([{'code': 'SI',
+                                           'name': 'Substitute in',
+                                           'person': persons_info_in['person'],
+                                           'person_id': persons_in[i],
+                                           'team_id': persons_info_in['team_id'],
+                                           'shirtnumber': persons_info_in['shirtnumber'],
+                                           'minute': persons_out[i][0][0]},
+                                          {'code': 'SO',
+                                           'name': 'Substitute out',
+                                           'person': persons_info_out['person'],
+                                           'person_id': persons_out[i][1],
+                                           'team_id': persons_info_out['team_id'],
+                                           'shirtnumber': persons_info_out['shirtnumber'],
+                                           'minute': persons_out[i][0][0]}])
+
+                except:
+                    substitutions.append([{'code': 'SI',
+                                           'name': 'Substitute in',
+                                           'person': persons_info_in['person'],
+                                           'person_id': persons_in[i],
+                                           'team_id': persons_info_in['team_id'],
+                                           'minute': persons_out[i][0][0]},
+                                          {'code': 'SO',
+                                           'name': 'Substitute out',
+                                           'person': persons_info_out['person'],
+                                           'person_id': persons_out[i][1],
+                                           'team_id': persons_info_out['team_id'],
+                                           'minute': persons_out[i][0][0]}])
+                if len(persons_out[i][0]) == 2:
+                    substitutions[-1][0]['minute_extra'] = persons_out[i][0][1]
+                    substitutions[-1][1]['minute_extra'] = persons_out[i][0][1]
+        except Exception as ex:
+            print(f'Error searching for substitutions in team A (update_substitutions) "{ex}"')
+
+        # Team B
+        try:
+            persons_out_html = soup.find(text='Substitutes').find_parent(class_='combined-lineups-container'). \
+                find(class_='container right').find_all(class_='substitute substitute-out')
+            persons_out = list([x.text.split(' ')[-1].strip()[:-1].split('+'),
+                                x.find('a').get('href').split('/')[3]] for x in persons_out_html)
+
+            persons_in = list(x.find_parent(class_='player large-link').find(class_='substitute substitute-in'). \
+                              find('a').get('href').split('/')[3] for x in persons_out_html)
+
+            for i in range(len(persons_in)):
+                persons_info_in = get_person_info(person_id=persons_in[i], result=result)
+                persons_info_out = get_person_info(person_id=persons_out[i][1], result=result)
+
+                try:
+                    substitutions.append([{'code': 'SI',
+                                           'name': 'Substitute in',
+                                           'person': persons_info_in['person'],
+                                           'person_id': persons_in[i],
+                                           'team_id': persons_info_in['team_id'],
+                                           'shirtnumber': persons_info_in['shirtnumber'],
+                                           'minute': persons_out[i][0][0]},
+                                          {'code': 'SO',
+                                           'name': 'Substitute out',
+                                           'person': persons_info_out['person'],
+                                           'person_id': persons_out[i][1],
+                                           'team_id': persons_info_out['team_id'],
+                                           'shirtnumber': persons_info_out['shirtnumber'],
+                                           'minute': persons_out[i][0][0]}])
+
+                except:
+                    substitutions.append([{'code': 'SI',
+                                           'name': 'Substitute in',
+                                           'person': persons_info_in['person'],
+                                           'person_id': persons_in[i],
+                                           'team_id': persons_info_in['team_id'],
+                                           'minute': persons_out[i][0][0]},
+                                          {'code': 'SO',
+                                           'name': 'Substitute out',
+                                           'person': persons_info_out['person'],
+                                           'person_id': persons_out[i][1],
+                                           'team_id': persons_info_out['team_id'],
+                                           'minute': persons_out[i][0][0]}])
+                if len(persons_out[i][0]) == 2:
+                    substitutions[-1][0]['minute_extra'] = persons_out[i][0][1]
+                    substitutions[-1][1]['minute_extra'] = persons_out[i][0][1]
+        except Exception as ex:
+            print(f'Error searching for substitutions in team B (update_substitutions) "{ex}"')
+
+        result['competition']['season']['round']['match']['substitutions'] = substitutions
+    except Exception as ex:
+        print(f'Replacement search error (update_substitutions) "{ex}"')
+    finally:
+        return result
+
+
+def update_goals(soup, result: dict):
+    try:
+        goals = []
+        try:
+            goals_ = soup.find_all(src="/media/v1.8.9/img/events/G.png")
+            for i in range(len(goals_)):
+                minute = goals_[i].next.text.strip().replace("'", '').split('+')
+                person_id = goals_[i].find_previous(class_='player large-link').find('a').get('href').split('/')[3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                goals.append({'code': 'G',
+                              'name': 'Goal',
+                              'person': person_info['person'],
+                              'person_id': person_id,
+                              'team_id': person_info['team_id'],
+                              'minute': minute[0]})
+                if len(minute) == 2:
+                    goals[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Goals search error (update_goals) "{ex}"')
+
+        # Own goal
+        try:
+            goals_ = soup.find_all(src="/media/v1.8.9/img/events/OG.png")
+            for i in range(len(goals_)):
+                minute = goals_[i].next.text.strip().replace("'", '').split('+')
+                person_id = goals_[i].find_previous(class_='player large-link').find('a').get('href').split('/')[3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                goals.append({'code': 'OG',
+                              'name': 'Own goal',
+                              'person': person_info['person'],
+                              'person_id': person_id,
+                              'team_id': person_info['team_id'],
+                              'minute': minute[0]})
+                if len(minute) == 2:
+                    goals[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Own goals search error (update_goals) "{ex}"')
+
+        # Penalty
+        try:
+            penalty_goal = soup.find_all(src="/media/v1.8.9/img/events/PG.png")
+            for i in range(len(penalty_goal)):
+                minute = penalty_goal[i].next.text.strip().replace("'", '').split('+')
+                person_id = \
+                    penalty_goal[i].find_previous(class_='player large-link').find('a').get('href').split('/')[
+                        3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                goals.append({'code': 'PG',
+                              'name': 'Penalty goal',
+                              'person': person_info['person'],
+                              'person_id': person_id,
+                              'team_id': person_info['team_id'],
+                              'minute': minute[0]})
+                if len(minute) == 2:
+                    goals[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Error looking for penalties during game time (update_goals) "{ex}"')
+
+        result['competition']['season']['round']['match']['goals'] = goals
+    except Exception as ex:
+        print(f'Error searching all kinds of goals (update_goals) "{ex}"')
+    finally:
+        return result
+
+
+def update_bookings(soup, result: dict):
+    try:
+        bookings = []
+
+        # Yellow card
+        try:
+            bookings_ = soup.find_all(src="/media/v1.8.9/img/events/YC.png")
+            for i in bookings_:
+                minute = i.next.text.strip().replace("'", '').split('+')
+                person_id = i.find_previous(class_='player large-link').find('a').get('href').split('/')[3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                bookings.append({'code': 'YC',
+                                 'name': 'Yellow card',
+                                 'person': person_info['person'],
+                                 'person_id': person_id,
+                                 'team_id': person_info['team_id'],
+                                 'minute': minute[0]})
+                if len(minute) == 2:
+                    bookings[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Yellow card search error (update_bookings) "{ex}"')
+
+        # Red card
+        try:
+            bookings_ = soup.find_all(src="/media/v1.8.9/img/events/RC.png")
+            for i in bookings_:
+                minute = i.next.text.strip().replace("'", '').split('+')
+                person_id = i.find_previous(class_='player large-link').find('a').get('href').split('/')[3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                bookings.append({'code': 'RC',
+                                 'name': 'Red card',
+                                 'person': person_info['person'],
+                                 'person_id': person_id,
+                                 'team_id': person_info['team_id'],
+                                 'minute': minute[0]})
+                if len(minute) == 2:
+                    bookings[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Red card search error (update_bookings) "{ex}"')
+
+        # Yellow 2 card
+        try:
+            bookings_ = soup.find_all(src="/media/v1.8.9/img/events/Y2C.png")
+            for i in bookings_:
+                minute = i.next.text.strip().replace("'", '').split('+')
+                person_id = i.find_previous(class_='player large-link').find('a').get('href').split('/')[3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                bookings.append({'code': 'Y2C',
+                                 'name': 'Yellow 2nd/RC',
+                                 'person': person_info['person'],
+                                 'person_id': person_id,
+                                 'team_id': person_info['team_id'],
+                                 'minute': minute[0]})
+                if len(minute) == 2:
+                    bookings[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Yellow 2 card search error (update_bookings) "{ex}"')
+
+        # Penalty missed
+        try:
+            penalty_goal = soup.find_all(src="/media/v1.8.9/img/events/PM.png")
+            for i in range(len(penalty_goal)):
+                minute = penalty_goal[i].next.text.strip().replace("'", '').split('+')
+                person_id = \
+                    penalty_goal[i].find_previous(class_='player large-link').find('a').get('href').split('/')[
+                        3]
+                person_info = get_person_info(person_id=person_id, result=result)
+                bookings.append({'code': 'PM',
+                                 'name': 'Penalty missed',
+                                 'person': person_info['person'],
+                                 'person_id': person_id,
+                                 'team_id': person_info['team_id'],
+                                 'minute': minute[0]})
+                if len(minute) == 2:
+                    bookings[-1]['minute_extra'] = minute[1]
+        except Exception as ex:
+            print(f'Missed penalty search error (update_bookings) "{ex}"')
+
+        result['competition']['season']['round']['match']['bookings'] = bookings
+    except Exception as ex:
+        print(f'Error searching all kinds of events (update_bookings) "{ex}"')
+    finally:
+        return result
+
+
+def update_penalty_shootout(soup, result: dict):
+    try:
+        penalty_shootout = []
+        team_A_name = result['competition']['season']['round']['match']['team_A_name']
+        team_B_name = result['competition']['season']['round']['match']['team_B_name']
+
+        try:
+            penalty_shootout_src = soup.find('div', id='page_match_1_block_match_penalty_shootout_20').find_all(
+                'li')
+            for i in penalty_shootout_src:
+                if i.find('img', src='/media/v1.8.9/img/events/PSG.png'):
+                    person_id = i.find('a').get('href').split('/')[-2]
+                    penalty_info = list(x.text.strip() for x in i.find_all('span'))
+                    if penalty_info[0] == '':
+                        penalty_shootout.append({'code': team_B_name,
+                                                 'name': 'Penalty shootout goal',
+                                                 'person': penalty_info[2],
+                                                 'person_id': person_id,
+                                                 'team_id': get_person_info(person_id=person_id,
+                                                                            result=result)['team_id']})
+                    if penalty_info[2] == '':
+                        penalty_shootout.append({'code': team_A_name,
+                                                 'name': 'Penalty shootout goal',
+                                                 'person': penalty_info[0],
+                                                 'person_id': person_id,
+                                                 'team_id': get_person_info(person_id=person_id,
+                                                                            result=result)['team_id']})
+        except:
+            pass
+
+        result['competition']['season']['round']['match']['penalty_shootout'] = penalty_shootout
+    except Exception as ex:
+        print(f'Penalty shootout search error (update_penalty_shootout) "{ex}"')
+    finally:
+        return result
+
+
+def update_person_url(soup, result: dict):
+    try:
+        person_url = result['competition']['season']['round']['match']['person_url']
+        persons_url = soup.find_all(class_='player large-link')
+        persons_url = list(('http://int.soccerway.com' + x.find('a').get('href')) for x in persons_url)
+        for i in persons_url:
+            person_url.append({'id': i.split('/')[-2],
+                               'url': i})
+        result['competition']['season']['round']['match']['person_url'] = person_url
+    except Exception as ex:
+        print(f'Person url search error (update_person_url) "{ex}"')
+    finally:
+        return result
+
+
+def update_team_url(soup, result: dict):
+    try:
+        team_url = []
+
+        teams_url = soup.find_all(class_='team-title')
+        teams_url = list(('http://int.soccerway.com' + x.get('href')) for x in teams_url)
+        for i in teams_url:
+            team_url.append({'id': i.split('/')[-2], 'url': i})
+
+        result['competition']['season']['round']['match']['team_url'] = team_url
+    except Exception as ex:
+        print(f'Command url lookup error (update_team_url) "{ex}"')
+    finally:
+        return result
+
+
+def save_result(result: dict):
+    try:
+        with open('result.json', 'w', encoding='utf-8') as file:
+            json.dump(result, file, indent=4, ensure_ascii=False)
+        try:
+            match_id = result['competition']['season']['round']['match']['match_id']
+            with open(f'Results/result_{match_id}.json', 'w', encoding='utf-8') as file:
+                json.dump(result, file, indent=4, ensure_ascii=False)
+        except Exception as ex:
+            print(f'"{ex}"')
+    except Exception as ex:
+        print(f'Error saving the result (save_result) "{ex}"')
+
+
+@bottle.route('/soccerway_parser_match/<data>')
+def soccerway_parser_match(data: str):
+    start = monotonic()
+
+    try:
+        client_ip = bottle.request.environ.get('REMOTE_ADDR')
+        print('\nClient ip:', client_ip)
+    except Exception as ex:
+        print(f'Error getting client ip "{ex}"')
+
+    match_day, match_id = '', ''
+    try:
+        match_day, match_id = get_input_data(data)
+    except Exception as ex:
+        print(f'Data entered incorrectly (get_input_data)"{ex}"')
+
+    for attempt in range(100):
+        try:
+            url = f'https://int.soccerway.com/matches/{match_day}/1/1/1/1/{match_id}/'
+            proxies = {'http': get_proxy()}
+            src = ''
+            try:
+                req = requests.get(url, headers=headers, proxies=proxies, timeout=20)
+                src = req.text
+            except Exception as ex:
+                print(f'Get Request soccerway.com Error "{ex}"')
+
+            save_src(src)
+            result = get_result_pattern()
+
+            result['method']['parameter'][1]['value'] = match_id
+            result['method']['parameter'][4]['value'] = url
+            result['competition']['season']['round']['match']['match_id'] = match_id
+
+            soup = bs4.BeautifulSoup(src, 'lxml')
+
+            result = update_competition_info(soup, result=result)
+            result = update_competition_country(soup, result=result)
+            result = update_season_info(soup, result=result)
+            result = update_round_info(soup, result=result)
+            result = update_date_time_info(soup, result=result)
+            result = update_game_week(soup, result=result)
+            result = update_teams_info(soup, result=result)
+            result = update_match_status(soup, result=result)
+            result = update_fs(soup, result=result)
+            result = update_matchinfo(soup, result=result)
+            result = update_lineups(soup, result=result)
+            result = update_lineups_bench(soup, result=result)
+            result = update_substitutions(soup, result=result)
+            result = update_goals(soup, result=result)
+            result = update_bookings(soup, result=result)
+            result = update_penalty_shootout(soup, result=result)
+            result = update_person_url(soup, result=result)
+            result = update_team_url(soup, result=result)
+            result['status'] = 'Ok'
+            result['last_generated'] = str(datetime.datetime.now())[:-7]
+            result['last_updated'] = str(datetime.datetime.now())[:-7]
+
+            print('Completed for ' + str(monotonic() - start)[:6] + ' sec')
+            save_result(result=result)
+            return bottle.static_file('result.json', root='./', download='result.json')
+
+        except Exception as ex:
+            print(f'Match parser error (soccerway_parser_match) "{ex}"')
+            sleep(5)
+
+
+def main():
+    pass
+
+
+if __name__ == '__main__':
+    try:
+        update_proxy()
+        config = get_config()
+        bottle.run(host=config['ip'], port=config['port'], debug=True)  # 192.168.31.95
+    except Exception as ex:
+        print(ex)
+
+# ip macbook 192.168.31.235
