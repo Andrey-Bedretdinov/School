@@ -23,7 +23,7 @@ def f(p):
 
 
 for i in range(1, 55):
-    if f((5, i)) == 'П1':
+    if i * 2 * 2 + 5 >= 59:
         print(i)
         break
 
@@ -32,7 +32,8 @@ for i in range(1, 55):
         print(i)
         break
 
-print('---')
+ans = []
 for i in range(1, 55):
     if f((5, i)) == 'П2':
-        print(i)
+        ans.append(i)
+print(*ans)
