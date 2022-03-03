@@ -19,6 +19,7 @@ with open('36881.txt', 'r') as file:
     for line in file:
         data.append(int(line))
 data.sort()
+
 combinations = combinations(data, 2)
 count = 0
 max_sum = 0
