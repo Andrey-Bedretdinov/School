@@ -18,14 +18,6 @@ def f(p):
         return 'В2'
     if all(f(x) == 'В2' or f(x) == 'В1' for x in moves(p)):
         return 'П2'
-    if any(f(x) == 'П2' or f(x) == 'П1' for x in moves(p)):
-        return 'В3'
-    if all(f(x) == 'В2' or f(x) == 'В1' or f(x) == 'В3' for x in moves(p)):
-        return 'П3'
-    if any(f(x) == 'П2' or f(x) == 'П1' or f(x) == 'П3' for x in moves(p)):
-        return 'В4'
-    if all(f(x) == 'В2' or f(x) == 'В1' or f(x) == 'В3' or f(x) == 'В4' for x in moves(p)):
-        return 'П4'
 
 
 for i in range(1, 100):
