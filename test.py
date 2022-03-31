@@ -1,39 +1,8 @@
-from functools import lru_cache
+minim = 20
+min_x = 1000
+min_y = 1000
+for x in range(1, 20):
+    for y in range(1, 20):
+        minim = min(minim, x / 30 + y / 50 + ((4 - x)**2 + (15 - y)**2)**0.5) / 30
 
-
-def moves(p):
-    a, b = p
-    return (a + 3, b), (a * 2, b), (a, b + 3), (a, b * 2)
-
-
-@lru_cache(None)
-def f(p):
-    if sum(p) >= 79:
-        return 'WIN'
-    if any(f(x) == 'WIN' for x in moves(p)):
-        return 'В1'
-    if all(f(x) == 'В1' for x in moves(p)):
-        return 'П1'
-    if any(f(x) == 'П1' for x in moves(p)):
-        return 'В2'
-    if all(f(x) == 'В2' or f(x) == 'В1' for x in moves(p)):
-        return 'П2'
-
-
-for i in range(1, 100):
-    if f((9, i)) == 'В1':
-        print(i)
-        break
-
-ans = []
-for i in range(1, 100):
-    if f((9, i)) == 'В2':
-        ans.append(i)
-print(len(ans))
-
-
-ans = []
-for i in range(1, 100):
-    if f((9, i)) == 'П2':
-        ans.append(i)
-print(*ans, '\n')
+print(minim)
