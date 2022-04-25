@@ -109,7 +109,7 @@ def f(x):
     return a, b
 
 
-for i in range(10000000, 0, -1):
+for i in range(100000000, 0, -1):
     if f(i) == (30, 31):
         print(i)
         break
