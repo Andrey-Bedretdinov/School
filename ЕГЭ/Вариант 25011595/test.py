@@ -22,7 +22,7 @@ for x in xy:
 
     for i in range(len(xy[x]) - 1):
         a, b = xy[x][i], xy[x][i + 1]
-        if b - a - 1 == 3:  # Поменять на 13!!!
+        if b - a - 1 == 13:  # Поменять на 13!!!
             maxi_x = x
             mini_y = a + 1
             break
