@@ -88,6 +88,82 @@ def f(n):
 print(f(32))  # 3194
 
 
+# Number 17
+with open('17 (1).txt') as file:
+    data = []
+    for line in file:
+        data.append(int(line))
+
+mini = 10**20
+for i in data:
+    if i % 21 == 0:
+        mini = min(mini, i)
+
+count = 0
+ms = 0
+for i in range(len(data) - 1):
+    a, b = data[i], data[i + 1]
+    if a % mini == 0 or b % mini == 0:
+        count += 1
+        ms = max(ms, a + b)
+print(count, ms)  # 126 171120
+
+
+# Number 19 20 21
+from functools import lru_cache
+
+
+def moves(p):
+    a, b = p
+    return (a + 1, b), (a * 2, b), (a, b + 1), (a, b * 2)
+
+
+@lru_cache(None)
+def f(p):
+    if sum(p) >= 231:
+        return 'WIN'
+    if any(f(x) == 'WIN' for x in moves(p)):
+        return 'В1'
+    if all(f(x) == 'В1' for x in moves(p)):
+        return 'П1'
+    if any(f(x) == 'П1' for x in moves(p)):
+        return 'В2'
+    if all(f(x) == 'В2' or f(x) == 'В1' for x in moves(p)):
+        return 'П2'
+    return ''
+
+
+for s in range(1, 216):
+    print(s, f((17, s)))
+    # 54
+    # 98 106
+    # 97
+
+
+# Number 22
+def f(x):
+    q, p, k1, k2 = 8, 10, 0, 0
+    while x <= 100:
+        k1 += 1
+        x += p
+    while x >= q:
+        k2 += 1
+        x -= q
+    l = x + k1
+    m = x + k2
+    return l, m
+
+
+for i in range(1000, 1, -1):
+    if f(i) == (12, 19):
+        print(i)  # 53
+        break
+
+
+
+
+
+
 
 
 

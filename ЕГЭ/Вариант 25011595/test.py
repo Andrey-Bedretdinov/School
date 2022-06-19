@@ -1,9 +1,13 @@
-# Number 17
-with open('17 (1).txt') as file:
-    data = []
-    for line in file:
-        data.append(int(line))
+# Number 23
+def f(start, stop):
+    if start > stop:
+        return 0
+    if start == stop:
+        return 1
+    return f(start + 2, stop) + f(start * 2, stop)
 
-print(data)
+
+print(f(1, 18) * f(18, 52))  # 96
+
 
 
