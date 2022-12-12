@@ -4,7 +4,7 @@ import numexpr as ne
 
 def get_rf(a, b):
     r = round((a**2 + b**2)**0.5, 2)
-    f = round(atan(b/a)*180/pi)
+    f = round(atan(b/a)*180/pi, 2)
     return r, f
 
 
