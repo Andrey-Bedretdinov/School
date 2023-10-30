@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++ -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/Study.dir/informaticts/1.cpp.o CMakeFiles/Study.dir/informaticts/9.1.cpp.o CMakeFiles/Study.dir/main.cpp.o -o Study 

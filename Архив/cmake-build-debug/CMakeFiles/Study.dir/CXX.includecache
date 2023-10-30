@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/andreybedretdinov/Projects/Study/informaticts/1.cpp
+iostream
+-
+cmath
+-
+
+/Users/andreybedretdinov/Projects/Study/informaticts/9.1.cpp
+iostream
+-
+cmath
+-
+
+/Users/andreybedretdinov/Projects/Study/main.cpp
+iostream
+-
+cmath
+-
+
