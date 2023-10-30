@@ -4,7 +4,7 @@ import numexpr as ne
 
 def get_rf(a, b):
     r = round((a**2 + b**2)**0.5, 2)
-    f = round(atan(b/a)*180/pi, 2)
+    f = round(atan(b/a), 2)
     return r, f
 
 
@@ -14,13 +14,13 @@ while True:
     n = int(input('Введи степень числа: '))
     m = int(input('Введи корень числа: '))
     r, f = get_rf(a, b)
-    print(f'r = {r}, f = {f}°\n')
+    print(f'\nr = {r}, f = {f} ({round(f*180/pi, 2)}°)\n')
 
-    f = f * pi / 180
-    s = [round(abs(r**n) * cos(n * f)), round(abs(r**n) * sin(n * f))]
-    print(f'Число в степени: {s[0]} + {s[1]}*i')
+    f = atan(b/a)
+    s = [round(abs(r**n) * cos(n * f), 2), round(abs(r**n) * sin(n * f), 2)]
+    print(f'Число в степени {n}: {s[0]} + {s[1]}*i')
 
     for i in range(m):
         k = ([round(abs(r**(1/m)) * cos((f + 2*pi*i) / m), 2), round(abs(r**(1/m)) * sin((f + 2*pi*i) / m), 2)])
-        print(f'Корень #{i+1}: {k[0]} + {k[1]}*i')
+        print(f'Корень ({m}) #{i+1}: {k[0]} + {k[1]}*i')
     print('-------------\n')
